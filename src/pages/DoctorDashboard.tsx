@@ -67,40 +67,87 @@ export const DoctorDashboard = () => {
   });
 
   useEffect(() => {
-    // Load mock data - in production, fetch from API
+    const todayStr = new Date().toISOString().split('T')[0];
+
     setPatients([
-      { id: '1', name: 'John Doe', email: 'john@example.com', lastVisit: '2024-01-15', upcomingAppointments: 2, status: 'active' },
-      { id: '2', name: 'Jane Smith', email: 'jane@example.com', lastVisit: '2024-01-10', upcomingAppointments: 1, status: 'active' },
-      { id: '3', name: 'Bob Johnson', email: 'bob@example.com', lastVisit: '2024-01-05', upcomingAppointments: 0, status: 'active' },
+      { id: '1', name: 'Ananya Deshpande', email: 'ananya.d@gmail.com', lastVisit: '2025-01-14', upcomingAppointments: 2, status: 'active' },
+      { id: '2', name: 'Rohan Verma', email: 'rohan.verma@outlook.com', lastVisit: '2025-01-12', upcomingAppointments: 1, status: 'active' },
+      { id: '3', name: 'Meera Nair', email: 'meera.nair@yahoo.com', lastVisit: '2025-01-09', upcomingAppointments: 1, status: 'active' },
+      { id: '4', name: 'Vikram Joshi', email: 'vikram.j@corp.in', lastVisit: '2025-01-04', upcomingAppointments: 0, status: 'active' },
+      { id: '5', name: 'Sunita Patil', email: 'sunita.patil@rediffmail.com', lastVisit: '2024-12-28', upcomingAppointments: 1, status: 'active' },
+      { id: '6', name: 'Arjun Kulkarni', email: 'arjun.k@tech.org', lastVisit: '2024-12-22', upcomingAppointments: 0, status: 'inactive' },
+      { id: '7', name: 'Zoya Siddiqui', email: 'zoya.siddiqui@gmail.com', lastVisit: '2024-12-15', upcomingAppointments: 1, status: 'active' },
+      { id: '8', name: 'Devendra Shinde', email: 'd.shinde@pune.gov.in', lastVisit: '2024-12-08', upcomingAppointments: 1, status: 'active' }
     ]);
 
     setAppointments([
       { 
         id: '1', 
         patientId: '1', 
-        patientName: 'John Doe', 
-        date: '2024-01-20', 
+        patientName: 'Ananya Deshpande', 
+        date: todayStr, 
         time: '10:00 AM', 
-        reason: 'Follow-up consultation',
+        reason: 'Hypertension follow-up & medication review',
         status: 'confirmed',
-        symptoms: 'Persistent headache, mild fever'
+        symptoms: 'Mild dizziness, BP 138/88'
       },
       { 
         id: '2', 
         patientId: '2', 
-        patientName: 'Jane Smith', 
-        date: '2024-01-20', 
-        time: '2:00 PM', 
-        reason: 'Annual checkup',
-        status: 'pending'
+        patientName: 'Rohan Verma', 
+        date: todayStr, 
+        time: '11:30 AM', 
+        reason: 'Type 2 Diabetes HbA1c review',
+        status: 'confirmed',
+        symptoms: 'Fasting blood glucose elevated (135 mg/dL)'
       },
+      { 
+        id: '3', 
+        patientId: '3', 
+        patientName: 'Meera Nair', 
+        date: todayStr, 
+        time: '02:00 PM', 
+        reason: 'Post-viral fatigue & routine blood work',
+        status: 'pending',
+        symptoms: 'General weakness, muscle aches'
+      },
+      { 
+        id: '4', 
+        patientId: '5', 
+        patientName: 'Sunita Patil', 
+        date: todayStr, 
+        time: '03:30 PM', 
+        reason: 'Chronic migraine & vision sensitivity',
+        status: 'pending',
+        symptoms: 'Throbbing frontal headache, photophobia'
+      },
+      { 
+        id: '5', 
+        patientId: '7', 
+        patientName: 'Zoya Siddiqui', 
+        date: '2025-01-22', 
+        time: '10:30 AM', 
+        reason: 'Seasonal asthma exacerbation',
+        status: 'confirmed',
+        symptoms: 'Wheezing, nocturnal cough'
+      },
+      { 
+        id: '6', 
+        patientId: '8', 
+        patientName: 'Devendra Shinde', 
+        date: '2025-01-24', 
+        time: '04:00 PM', 
+        reason: 'Knee joint osteoarthritis evaluation',
+        status: 'confirmed',
+        symptoms: 'Bilateral knee stiffness upon walking'
+      }
     ]);
 
     setStats({
-      totalPatients: 3,
-      todayAppointments: 2,
-      pendingAppointments: 1,
-      completedToday: 0
+      totalPatients: 8,
+      todayAppointments: 4,
+      pendingAppointments: 2,
+      completedToday: 1
     });
   }, []);
 

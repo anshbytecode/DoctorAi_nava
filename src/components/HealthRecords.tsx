@@ -30,19 +30,56 @@ export const HealthRecords = () => {
     {
       id: '1',
       type: 'visit',
-      title: 'Annual Checkup',
-      date: '2024-01-10',
+      title: 'Comprehensive Annual Checkup',
+      date: '2025-01-10',
       doctor: 'Dr. Anand Shinde',
-      description: 'Routine annual health checkup',
-      notes: 'All vitals normal. Recommended to continue current exercise routine.'
+      description: 'Full body routine physical examination and preventive screening',
+      notes: 'All vitals within optimal range. BMI 23.4. Recommended continuing 30 min daily cardio.'
     },
     {
       id: '2',
       type: 'lab',
-      title: 'Blood Test Results',
-      date: '2024-01-08',
-      description: 'Complete blood count and lipid panel',
-      notes: 'All values within normal range'
+      title: 'Complete Metabolic & Lipid Panel',
+      date: '2025-01-08',
+      doctor: 'Dr. Anand Shinde',
+      description: 'CBC, Fasting Blood Sugar, HbA1c, Serum Creatinine & Lipid profile',
+      notes: 'Total Cholesterol 178 mg/dL (Normal). Fasting Sugar 92 mg/dL. HbA1c 5.4%.'
+    },
+    {
+      id: '3',
+      type: 'visit',
+      title: 'Cardiology Consultation & 12-Lead ECG',
+      date: '2024-12-14',
+      doctor: 'Dr. Priya Deshmukh',
+      description: 'Resting Electrocardiogram (ECG) and cardiovascular stress screening',
+      notes: 'Normal sinus rhythm. No ST-segment elevation. Blood pressure 118/76 mmHg.'
+    },
+    {
+      id: '4',
+      type: 'vaccination',
+      title: 'COVID-19 Booster & Seasonal Influenza Vaccine',
+      date: '2024-11-20',
+      doctor: 'Kalyani Nagar Health Centre',
+      description: 'Quadrivalent seasonal influenza and bivalent mRNA booster dose',
+      notes: 'Administered in left deltoid. No adverse side effects recorded during 15-min observation.'
+    },
+    {
+      id: '5',
+      type: 'lab',
+      title: 'High-Resolution Brain MRI Scan',
+      date: '2024-09-15',
+      doctor: 'Dr. Narendra Godi',
+      description: 'Non-contrast 3T magnetic resonance imaging for migraine evaluation',
+      notes: 'Brain parenchyma unremarkable. No acute infarction, hemorrhage, or mass effect.'
+    },
+    {
+      id: '6',
+      type: 'prescription',
+      title: 'Allergy & Dermatology Prescription Refill',
+      date: '2024-08-02',
+      doctor: 'Dr. Aisha Khan',
+      description: 'Topical hydrocortisone cream and Fexofenadine 180mg tablet course',
+      notes: 'Course completed for contact dermatitis. Skin lesion resolved completely.'
     }
   ]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);

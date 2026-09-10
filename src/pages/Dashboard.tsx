@@ -54,7 +54,7 @@ const Dashboard = () => {
       } catch (e) {
         console.warn('Failed to load appointments:', e);
       }
-      // Initial demo entries if no appointments exist yet
+      // Initial entries if no appointments booked yet
       setAppointmentsList([
         {
           id: 'demo-1',
@@ -63,16 +63,48 @@ const Dashboard = () => {
           specialty: 'Family Medicine',
           date: '2025-01-15',
           time: '10:00 AM',
-          status: 'confirmed'
+          status: 'confirmed',
+          reason: 'Routine quarterly checkup & general vitals review'
         },
         {
           id: 'demo-2',
           doctorId: '2',
-          doctorName: 'Dr. Dhruv Bhilare',
-          specialty: 'Veterinary',
-          date: '2025-01-20',
-          time: '2:30 PM',
-          status: 'pending'
+          doctorName: 'Dr. Priya Deshmukh',
+          specialty: 'Cardiology',
+          date: '2025-01-18',
+          time: '11:30 AM',
+          status: 'confirmed',
+          reason: 'Cardiovascular screening & ECG consultation'
+        },
+        {
+          id: 'demo-3',
+          doctorId: '4',
+          doctorName: 'Dr. Aisha Khan',
+          specialty: 'Dermatology',
+          date: '2025-01-22',
+          time: '03:00 PM',
+          status: 'pending',
+          reason: 'Skin allergy and eczema follow-up'
+        },
+        {
+          id: 'demo-4',
+          doctorId: '5',
+          doctorName: 'Dr. Vikramaditya Rao',
+          specialty: 'Orthopedic Surgery',
+          date: '2025-01-25',
+          time: '04:15 PM',
+          status: 'confirmed',
+          reason: 'Knee joint mobility & posture assessment'
+        },
+        {
+          id: 'demo-5',
+          doctorId: '7',
+          doctorName: 'Dr. Sneha Kulkarni',
+          specialty: 'Psychiatry',
+          date: '2025-01-28',
+          time: '02:00 PM',
+          status: 'pending',
+          reason: 'Sleep cycle & stress management consultation'
         }
       ]);
     };
@@ -100,14 +132,18 @@ const Dashboard = () => {
   };
 
   const healthMetrics = [
-    { label: 'Blood Pressure', value: '120/80', status: 'normal', icon: Activity },
+    { label: 'Blood Pressure', value: '120/80 mmHg', status: 'normal', icon: Activity },
     { label: 'Heart Rate', value: '72 bpm', status: 'normal', icon: Heart },
-    { label: 'Weight', value: '70 kg', status: 'normal', icon: TrendingUp }
+    { label: 'Blood Glucose', value: '95 mg/dL', status: 'normal', icon: TrendingUp },
+    { label: 'Weight', value: '68.5 kg', status: 'normal', icon: TrendingUp }
   ];
 
   const medications = [
-    { name: 'Aspirin', dosage: '100mg', frequency: 'Once daily', nextDose: '8:00 AM' },
-    { name: 'Vitamin D', dosage: '1000 IU', frequency: 'Once daily', nextDose: '9:00 AM' }
+    { name: 'Metformin 500mg', dosage: '500mg', frequency: 'Twice daily with meals', nextDose: '8:00 AM' },
+    { name: 'Aspirin Cardio', dosage: '75mg', frequency: 'Once daily after breakfast', nextDose: '9:00 AM' },
+    { name: 'Vitamin D3 (Cholecalciferol)', dosage: '60,000 IU', frequency: 'Once weekly', nextDose: 'Sunday' },
+    { name: 'Atorvastatin', dosage: '10mg', frequency: 'Once daily before bedtime', nextDose: '10:00 PM' },
+    { name: 'Omega-3 Fish Oil', dosage: '1000mg', frequency: 'Once daily', nextDose: '1:00 PM' }
   ];
 
   return (
