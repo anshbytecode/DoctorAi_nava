@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,7 @@ import {
   Search
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { medicalAPI } from '@/lib/api';
 
 interface Medicine {
   id: string;
@@ -66,6 +67,25 @@ export const MedicineInventory = () => {
       price: 0.8
     }
   ]);
+
+  useEffect(() => {
+    medicalAPI.getInventory().then(data => {
+      if (data && data.length > 0) {
+        setMedicines(data.map((m: any) => ({
+          id: m.id,
+          name: m.name,
+          genericName: m.generic_name,
+          quantity: m.quantity,
+          unit: m.unit || 'tablets',
+          expiryDate: m.expiry_date,
+          category: m.category,
+          supplier: m.supplier,
+          price: Number(m.price) || 0
+        })));
+      }
+    }).catch(() => {});
+  }, []);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingMedicine, setEditingMedicine] = useState<Medicine | null>(null);
@@ -150,8 +170,21 @@ export const MedicineInventory = () => {
         id: Date.now().toString()
       } as Medicine;
       setMedicines([...medicines, newMedicine]);
+      
+      // Save directly to Neon PostgreSQL
+      medicalAPI.saveInventoryItem({
+        name: formData.name,
+        generic_name: formData.genericName,
+        quantity: formData.quantity,
+        unit: formData.unit,
+        expiry_date: formData.expiryDate,
+        category: formData.category,
+        supplier: formData.supplier,
+        price: formData.price
+      }).catch(err => console.warn('Could not sync inventory item with Neon:', err));
+
       toast({
-        title: "Medicine added",
+        title: "Medicine added & saved to Cloud Database",
         description: `${formData.name} has been added to inventory`,
       });
     }

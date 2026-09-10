@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -11,6 +11,7 @@ import { FileText, Plus, Calendar, Stethoscope, Pill, Image as ImageIcon } from 
 import { format } from 'date-fns';
 import { ImageUpload } from './ImageUpload';
 import { useWeb3 } from '@/contexts/Web3Context';
+import { medicalAPI } from '@/lib/api';
 
 interface HealthRecord {
   id: string;
@@ -44,6 +45,24 @@ export const HealthRecords = () => {
       notes: 'All values within normal range'
     }
   ]);
+
+  useEffect(() => {
+    medicalAPI.getHealthRecords().then(data => {
+      if (data && data.length > 0) {
+        setRecords(data.map((r: any) => ({
+          id: r.id,
+          type: r.type || 'visit',
+          title: r.title,
+          date: r.date,
+          doctor: r.doctor,
+          description: r.description,
+          notes: r.notes,
+          images: r.images || []
+        })));
+      }
+    }).catch(() => {});
+  }, []);
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     type: 'visit' as HealthRecord['type'],
@@ -81,6 +100,18 @@ export const HealthRecords = () => {
       ...formData
     };
     setRecords([newRecord, ...records]);
+    
+    // Save directly to Neon PostgreSQL
+    medicalAPI.saveHealthRecord({
+      type: formData.type,
+      title: formData.title,
+      date: formData.date,
+      doctor: formData.doctor,
+      description: formData.description,
+      notes: formData.notes,
+      images: formData.images
+    }).catch(err => console.warn('Could not sync record with Neon:', err));
+
     setIsDialogOpen(false);
     setFormData({
       type: 'visit',

@@ -7,6 +7,7 @@ require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const db = require('./db');
 const authRoutes = require('./routes/auth');
 const appointmentRoutes = require('./routes/appointments');
+const medicalRoutes = require('./routes/medical');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -24,6 +25,7 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/appointments', appointmentRoutes);
+app.use('/api', medicalRoutes);
 
 // Root route
 app.get('/', (req, res) => {

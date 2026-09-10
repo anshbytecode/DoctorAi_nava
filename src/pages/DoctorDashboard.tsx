@@ -30,12 +30,14 @@ import { EHRIntegration } from '@/components/EHRIntegration';
 import { ClinicalTrialMatcher } from '@/components/ClinicalTrialMatcher';
 import { OnchainHealthProofs } from '@/components/OnchainHealthProofs';
 import { TokenRewards } from '@/components/TokenRewards';
+import { medicalAPI, appointmentAPI } from '@/lib/api';
 
 interface Patient {
   id: string;
   name: string;
   email: string;
-  lastVisit?: string;
+  phone?: string;
+  lastVisit: string;
   upcomingAppointments?: number;
   status: 'active' | 'inactive';
 }
@@ -47,7 +49,7 @@ interface Appointment {
   date: string;
   time: string;
   reason: string;
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  status: 'confirmed' | 'pending' | 'completed' | 'cancelled';
   symptoms?: string;
   visitSummary?: any;
 }
@@ -55,53 +57,71 @@ interface Appointment {
 export const DoctorDashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([
+    { id: '1', name: 'John Doe', email: 'john@example.com', lastVisit: '2024-01-15', upcomingAppointments: 2, status: 'active' },
+    { id: '2', name: 'Jane Smith', email: 'jane@example.com', lastVisit: '2024-01-10', upcomingAppointments: 1, status: 'active' },
+    { id: '3', name: 'Bob Johnson', email: 'bob@example.com', lastVisit: '2024-01-05', upcomingAppointments: 0, status: 'active' },
+  ]);
+  const [appointments, setAppointments] = useState<Appointment[]>([
+    { 
+      id: '1', 
+      patientId: '1', 
+      patientName: 'John Doe', 
+      date: '2024-01-20', 
+      time: '10:00 AM', 
+      reason: 'Follow-up consultation',
+      status: 'confirmed',
+      symptoms: 'Persistent headache, mild fever'
+    },
+    { 
+      id: '2', 
+      patientId: '2', 
+      patientName: 'Jane Smith', 
+      date: '2024-01-20', 
+      time: '2:00 PM', 
+      reason: 'Annual checkup',
+      status: 'pending'
+    },
+  ]);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [stats, setStats] = useState({
-    totalPatients: 0,
-    todayAppointments: 0,
-    pendingAppointments: 0,
+    totalPatients: 3,
+    todayAppointments: 2,
+    pendingAppointments: 1,
     completedToday: 0
   });
 
   useEffect(() => {
-    // Load mock data - in production, fetch from API
-    setPatients([
-      { id: '1', name: 'John Doe', email: 'john@example.com', lastVisit: '2024-01-15', upcomingAppointments: 2, status: 'active' },
-      { id: '2', name: 'Jane Smith', email: 'jane@example.com', lastVisit: '2024-01-10', upcomingAppointments: 1, status: 'active' },
-      { id: '3', name: 'Bob Johnson', email: 'bob@example.com', lastVisit: '2024-01-05', upcomingAppointments: 0, status: 'active' },
-    ]);
+    // Load live records from Neon PostgreSQL
+    medicalAPI.getPatients().then(data => {
+      if (data && data.length > 0) {
+        setPatients(data.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          email: p.email || 'patient@example.com',
+          lastVisit: p.last_visit || '2025-01-15',
+          upcomingAppointments: 1,
+          status: p.status || 'active'
+        })));
+        setStats(prev => ({ ...prev, totalPatients: data.length }));
+      }
+    }).catch(() => {});
 
-    setAppointments([
-      { 
-        id: '1', 
-        patientId: '1', 
-        patientName: 'John Doe', 
-        date: '2024-01-20', 
-        time: '10:00 AM', 
-        reason: 'Follow-up consultation',
-        status: 'confirmed',
-        symptoms: 'Persistent headache, mild fever'
-      },
-      { 
-        id: '2', 
-        patientId: '2', 
-        patientName: 'Jane Smith', 
-        date: '2024-01-20', 
-        time: '2:00 PM', 
-        reason: 'Annual checkup',
-        status: 'pending'
-      },
-    ]);
-
-    setStats({
-      totalPatients: 3,
-      todayAppointments: 2,
-      pendingAppointments: 1,
-      completedToday: 0
-    });
+    appointmentAPI.getAppointments().then(data => {
+      if (data && data.length > 0) {
+        setAppointments(data.map((a: any) => ({
+          id: a.id,
+          patientId: a.userId || a.user_id,
+          patientName: a.doctorName ? `Patient of ${a.doctorName}` : 'Registered Patient',
+          date: a.date,
+          time: a.time,
+          reason: a.reason || 'Medical Consultation',
+          status: a.status || 'confirmed'
+        })));
+        setStats(prev => ({ ...prev, todayAppointments: data.length }));
+      }
+    }).catch(() => {});
   }, []);
 
   const filteredPatients = patients.filter(p => 

@@ -313,3 +313,207 @@ export const authAPI = {
   },
 };
 
+// Helper for authenticated headers
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('token');
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+  };
+};
+
+// Appointments API connecting to Neon PostgreSQL
+export const appointmentAPI = {
+  getAppointments: async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/appointments`, { headers: getAuthHeaders() });
+      if (res.ok) return await res.json();
+    } catch (e) {
+      console.warn('Could not fetch appointments from backend:', e);
+    }
+    return [];
+  },
+  createAppointment: async (appointmentData: {
+    doctorId: string | number;
+    doctorName: string;
+    specialty: string;
+    date: string;
+    time: string;
+    reason?: string;
+  }) => {
+    const res = await fetch(`${API_BASE_URL}/appointments`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(appointmentData),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to book appointment');
+    }
+    return await res.json();
+  }
+};
+
+// Medical Data API connecting directly to Neon PostgreSQL via backend
+export const medicalAPI = {
+  // 1. Vitals
+  getVitals: async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/vitals`, { headers: getAuthHeaders() });
+      if (res.ok) return await res.json();
+    } catch (e) {
+      console.warn('Could not fetch vitals from backend:', e);
+    }
+    return [];
+  },
+  saveVital: async (data: any) => {
+    const res = await fetch(`${API_BASE_URL}/vitals`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to save vital to database');
+    return await res.json();
+  },
+
+  // 2. Health Records
+  getHealthRecords: async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/health-records`, { headers: getAuthHeaders() });
+      if (res.ok) return await res.json();
+    } catch (e) {
+      console.warn('Could not fetch health records:', e);
+    }
+    return [];
+  },
+  saveHealthRecord: async (data: any) => {
+    const res = await fetch(`${API_BASE_URL}/health-records`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to save health record to database');
+    return await res.json();
+  },
+
+  // 3. Medications
+  getMedications: async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/medications`, { headers: getAuthHeaders() });
+      if (res.ok) return await res.json();
+    } catch (e) {
+      console.warn('Could not fetch medications:', e);
+    }
+    return [];
+  },
+  saveMedication: async (data: any) => {
+    const res = await fetch(`${API_BASE_URL}/medications`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to save medication to database');
+    return await res.json();
+  },
+
+  // 4. Patients
+  getPatients: async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/patients`, { headers: getAuthHeaders() });
+      if (res.ok) return await res.json();
+    } catch (e) {
+      console.warn('Could not fetch patients:', e);
+    }
+    return [];
+  },
+  savePatient: async (data: any) => {
+    const res = await fetch(`${API_BASE_URL}/patients`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to save patient to database');
+    return await res.json();
+  },
+
+  // 5. Inventory
+  getInventory: async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/inventory`, { headers: getAuthHeaders() });
+      if (res.ok) return await res.json();
+    } catch (e) {
+      console.warn('Could not fetch inventory:', e);
+    }
+    return [];
+  },
+  saveInventoryItem: async (data: any) => {
+    const res = await fetch(`${API_BASE_URL}/inventory`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to save inventory item to database');
+    return await res.json();
+  },
+
+  // 6. Reminders
+  getReminders: async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/reminders`, { headers: getAuthHeaders() });
+      if (res.ok) return await res.json();
+    } catch (e) {
+      console.warn('Could not fetch reminders:', e);
+    }
+    return [];
+  },
+  saveReminder: async (data: any) => {
+    const res = await fetch(`${API_BASE_URL}/reminders`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to save reminder to database');
+    return await res.json();
+  },
+
+  // 7. Health Logs
+  getHealthLogs: async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/health-logs`, { headers: getAuthHeaders() });
+      if (res.ok) return await res.json();
+    } catch (e) {
+      console.warn('Could not fetch health logs:', e);
+    }
+    return [];
+  },
+  saveHealthLog: async (data: any) => {
+    const res = await fetch(`${API_BASE_URL}/health-logs`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to save health log to database');
+    return await res.json();
+  },
+
+  // 8. Consult Copilot
+  getCopilotNotes: async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/copilot`, { headers: getAuthHeaders() });
+      if (res.ok) return await res.json();
+    } catch (e) {
+      console.warn('Could not fetch copilot notes:', e);
+    }
+    return [];
+  },
+  saveCopilotNote: async (data: any) => {
+    const res = await fetch(`${API_BASE_URL}/copilot`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to save copilot note to database');
+    return await res.json();
+  }
+};
+

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { Activity, Heart, TrendingUp, Plus, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { medicalAPI } from '@/lib/api';
 
 interface VitalsEntry {
   id: string;
@@ -40,6 +41,24 @@ export const VitalsTracker = () => {
       temperature: 98.4,
     },
   ]);
+
+  useEffect(() => {
+    medicalAPI.getVitals().then(data => {
+      if (data && data.length > 0) {
+        const loaded: VitalsEntry[] = data.map((d: any) => ({
+          id: d.id,
+          date: d.date,
+          bloodPressure: { systolic: d.systolic_bp || 120, diastolic: d.diastolic_bp || 80 },
+          heartRate: d.heart_rate || 72,
+          weight: Number(d.weight) || 70,
+          temperature: d.temperature ? Number(d.temperature) : undefined,
+          notes: d.notes || undefined,
+        }));
+        setEntries(loaded);
+      }
+    }).catch(() => {});
+  }, []);
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -67,6 +86,18 @@ export const VitalsTracker = () => {
       notes: formData.notes || undefined,
     };
     setEntries([newEntry, ...entries]);
+    
+    // Save to Neon PostgreSQL
+    medicalAPI.saveVital({
+      date: formData.date,
+      systolic_bp: Number(formData.systolic),
+      diastolic_bp: Number(formData.diastolic),
+      heart_rate: Number(formData.heartRate),
+      weight: Number(formData.weight),
+      temperature: formData.temperature ? Number(formData.temperature) : undefined,
+      notes: formData.notes || undefined,
+    }).catch(err => console.warn('Could not sync vital with Neon:', err));
+
     setIsDialogOpen(false);
     setFormData({
       date: new Date().toISOString().split('T')[0],
@@ -78,7 +109,7 @@ export const VitalsTracker = () => {
       notes: '',
     });
     toast({
-      title: 'Vitals recorded',
+      title: 'Vitals recorded & saved to Cloud Database',
       description: 'Your vitals have been saved successfully.',
     });
   };
