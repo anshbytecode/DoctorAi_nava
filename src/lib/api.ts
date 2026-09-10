@@ -7,7 +7,7 @@ const getApiBaseUrl = () => {
   
   // In production (deployed), use Render backend
   if (import.meta.env.PROD) {
-    return 'https://doctorai-adv-anshul-1.onrender.com/api';
+    return 'https://doctorai-nava.onrender.com/api';
   }
   
   // In development, use localhost
