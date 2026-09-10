@@ -359,5 +359,41 @@ router.post('/copilot', resolveUser, async (req, res) => {
     res.status(500).json({ error: 'Failed to save copilot note' });
   }
 });
+// -------------------------------------------------------------
+// 9. HEALTH PROFILE (Stored in users.data JSONB column in Neon)
+// -------------------------------------------------------------
+router.get('/profile', resolveUser, async (req, res) => {
+  try {
+    if (db.isPostgresActive()) {
+      const result = await db.query('SELECT id, name, email, role, data FROM users WHERE id = $1', [req.userId]);
+      if (result.rows.length > 0) {
+        return res.json(result.rows[0].data || {});
+      }
+    }
+    res.json({});
+  } catch (err) {
+    console.error('Profile error:', err);
+    res.status(500).json({ error: 'Failed to fetch profile' });
+  }
+});
+
+router.post('/profile', resolveUser, async (req, res) => {
+  try {
+    const profileData = req.body;
+    if (db.isPostgresActive()) {
+      const result = await db.query(
+        'UPDATE users SET data = $1 WHERE id = $2 RETURNING id, data',
+        [JSON.stringify(profileData), req.userId]
+      );
+      if (result.rows.length > 0) {
+        return res.json(result.rows[0].data);
+      }
+    }
+    res.json(profileData);
+  } catch (err) {
+    console.error('Save profile error:', err);
+    res.status(500).json({ error: 'Failed to save profile' });
+  }
+});
 
 module.exports = router;

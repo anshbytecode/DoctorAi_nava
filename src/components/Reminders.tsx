@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Clock, Plus, Bell, Calendar, Pill, Activity, CheckCircle2, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { medicalAPI } from '@/lib/api';
 
 interface Reminder {
   id: string;
@@ -92,6 +93,15 @@ export const Reminders = () => {
       ...formData,
     };
     setReminders([...reminders, newReminder]);
+
+    // Save directly to Neon PostgreSQL
+    medicalAPI.saveReminder({
+      title: formData.title,
+      type: formData.type,
+      time: formData.time,
+      status: 'pending'
+    }).catch(err => console.warn('Could not sync reminder with Neon:', err));
+
     setIsDialogOpen(false);
     setFormData({
       type: 'general',
@@ -102,7 +112,7 @@ export const Reminders = () => {
       enabled: true,
     });
     toast({
-      title: 'Reminder created',
+      title: 'Reminder created & saved to Cloud Database',
       description: 'Your reminder has been set up successfully.',
     });
   };

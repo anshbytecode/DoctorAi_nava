@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -35,13 +35,14 @@ import { HealthLog } from '@/components/HealthLog';
 import { Header } from '@/components/Header';
 import { Link } from 'react-router-dom';
 import { AdvancedChatbot } from '@/components/AdvancedChatbot';
+import { appointmentAPI } from '@/lib/api';
 
 const Dashboard = () => {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
 
-  const upcomingAppointments = [
+  const [upcomingAppointments, setUpcomingAppointments] = useState<any[]>([
     {
       id: 1,
       doctor: 'Dr. Anand Shinde',
@@ -58,7 +59,23 @@ const Dashboard = () => {
       time: '2:30 PM',
       status: 'pending'
     }
-  ];
+  ]);
+
+  useEffect(() => {
+    // Load live appointments from Neon PostgreSQL
+    appointmentAPI.getAppointments().then(data => {
+      if (data && data.length > 0) {
+        setUpcomingAppointments(data.map((a: any) => ({
+          id: a.id,
+          doctor: a.doctorName || a.doctor_name || 'Dr. Specialist',
+          specialty: a.specialty || 'Family Medicine',
+          date: a.date,
+          time: a.time,
+          status: a.status || 'confirmed'
+        })));
+      }
+    }).catch(() => {});
+  }, [activeTab]);
 
   const healthMetrics = [
     { label: 'Blood Pressure', value: '120/80', status: 'normal', icon: Activity },

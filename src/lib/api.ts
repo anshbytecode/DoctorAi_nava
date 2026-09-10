@@ -514,6 +514,27 @@ export const medicalAPI = {
     });
     if (!res.ok) throw new Error('Failed to save copilot note to database');
     return await res.json();
+  },
+
+  // 9. Personal Health Profile (Neon PostgreSQL users.data JSONB)
+  getProfile: async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/profile`, { headers: getAuthHeaders() });
+      if (res.ok) return await res.json();
+    } catch (e) {
+      console.warn('Could not fetch profile:', e);
+    }
+    return null;
+  },
+  saveProfile: async (profileData: any) => {
+    const res = await fetch(`${API_BASE_URL}/profile`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(profileData),
+    });
+    if (!res.ok) throw new Error('Failed to save profile to database');
+    return await res.json();
   }
 };
+
 

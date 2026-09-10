@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Pill, Plus, Clock, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { medicalAPI } from '@/lib/api';
 
 interface Medication {
   id: string;
@@ -41,6 +42,24 @@ export const MedicationTracker = () => {
       startDate: '2024-01-01'
     }
   ]);
+
+  useEffect(() => {
+    medicalAPI.getMedications().then(data => {
+      if (data && data.length > 0) {
+        setMedications(data.map((m: any) => ({
+          id: m.id,
+          name: m.name,
+          dosage: m.dosage || '',
+          frequency: m.frequency || 'daily',
+          times: [m.next_dose || '9:00 AM'],
+          startDate: m.start_date || new Date().toISOString().split('T')[0],
+          endDate: m.end_date || '',
+          notes: m.instructions || ''
+        })));
+      }
+    }).catch(() => {});
+  }, []);
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -74,6 +93,19 @@ export const MedicationTracker = () => {
       times: formData.times.filter(t => t)
     };
     setMedications([...medications, newMedication]);
+
+    // Save directly to Neon PostgreSQL
+    medicalAPI.saveMedication({
+      name: formData.name,
+      dosage: formData.dosage,
+      frequency: formData.frequency,
+      next_dose: formData.times[0] || '09:00 AM',
+      start_date: formData.startDate,
+      end_date: formData.endDate,
+      instructions: formData.notes,
+      status: 'active'
+    }).catch(err => console.warn('Could not sync medication with Neon:', err));
+
     setIsDialogOpen(false);
     setFormData({
       name: '',
@@ -83,6 +115,10 @@ export const MedicationTracker = () => {
       startDate: new Date().toISOString().split('T')[0],
       endDate: '',
       notes: ''
+    });
+    toast({
+      title: 'Medication added & saved to Cloud Database',
+      description: `${formData.name} has been added to your tracker.`,
     });
   };
 

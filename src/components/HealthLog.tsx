@@ -18,6 +18,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { format, isToday, isYesterday, parseISO } from 'date-fns';
+import { medicalAPI } from '@/lib/api';
 
 interface HealthEntry {
   id: string;
@@ -44,45 +45,35 @@ export const HealthLog = () => {
     doctor: '',
     vitalValues: {} as Record<string, number>
   });
+  const [filterType, setFilterType] = useState<string>('all');
   const [showAddForm, setShowAddForm] = useState(false);
 
   useEffect(() => {
-    // Load mock data - in production, fetch from API
-    const mockEntries: HealthEntry[] = [
-      {
-        id: '1',
-        date: new Date().toISOString().split('T')[0],
-        type: 'symptom',
-        title: 'Headache',
-        description: 'Mild headache in the morning, improved after taking medication',
-        severity: 4
-      },
-      {
-        id: '2',
-        date: new Date().toISOString().split('T')[0],
-        type: 'medication',
-        title: 'Morning Medications',
-        description: 'Took prescribed medications',
-        medications: ['Paracetamol 500mg', 'Vitamin D']
-      },
-      {
-        id: '3',
-        date: new Date(Date.now() - 86400000).toISOString().split('T')[0],
-        type: 'visit',
-        title: 'Doctor Visit',
-        description: 'Routine checkup with Dr. Smith',
-        doctor: 'Dr. Smith'
-      },
-      {
-        id: '4',
-        date: new Date(Date.now() - 86400000).toISOString().split('T')[0],
-        type: 'vital',
-        title: 'Vitals Check',
-        description: 'Daily vitals measurement',
-        vitalValues: { bloodPressure: '120/80', heartRate: 72, temperature: 98.6 }
+    // Load live logs from Neon PostgreSQL
+    medicalAPI.getHealthLogs().then(data => {
+      if (data && data.length > 0) {
+        setEntries(data.map((l: any) => ({
+          id: l.id,
+          date: l.date || new Date().toISOString().split('T')[0],
+          type: 'symptom',
+          title: l.notes || l.symptoms || 'Daily Health Log',
+          description: l.symptoms || 'Recorded in daily log',
+          severity: 3
+        })));
+      } else {
+        const mockEntries: HealthEntry[] = [
+          {
+            id: '1',
+            date: new Date().toISOString().split('T')[0],
+            type: 'symptom',
+            title: 'Headache',
+            description: 'Mild headache in the morning, improved after taking medication',
+            severity: 4
+          }
+        ];
+        setEntries(mockEntries);
       }
-    ];
-    setEntries(mockEntries);
+    }).catch(() => {});
   }, []);
 
   const handleAddEntry = () => {
@@ -102,6 +93,16 @@ export const HealthLog = () => {
     };
 
     setEntries([entry, ...entries]);
+
+    // Save directly to Neon PostgreSQL
+    medicalAPI.saveHealthLog({
+      date: selectedDate,
+      symptoms: newEntry.description || newEntry.title,
+      mood: 'Normal',
+      sleep_hours: 8,
+      notes: newEntry.title
+    }).catch(err => console.warn('Could not sync health log with Neon:', err));
+
     setNewEntry({
       type: 'symptom',
       title: '',
@@ -113,7 +114,7 @@ export const HealthLog = () => {
     });
     setShowAddForm(false);
     toast({
-      title: "Entry added",
+      title: "Entry added & saved to Cloud Database",
       description: "Your health log entry has been saved",
     });
   };

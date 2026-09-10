@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { medicalAPI } from '@/lib/api';
 
 interface HealthProfile {
   age: number;
@@ -40,13 +41,13 @@ export const PersonalHealthProfile = () => {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState<HealthProfile>({
-    age: 30,
+    age: 32,
     gender: 'male',
     weight: 70,
-    height: 170,
+    height: 175,
     bloodType: 'O+',
-    allergies: ['None'],
-    chronicConditions: [],
+    allergies: ['Penicillin'],
+    chronicConditions: ['None'],
     medications: [],
     familyHistory: [],
     lifestyle: {
@@ -57,10 +58,27 @@ export const PersonalHealthProfile = () => {
     }
   });
 
+  useEffect(() => {
+    medicalAPI.getProfile().then(saved => {
+      if (saved && typeof saved === 'object' && Object.keys(saved).length > 0) {
+        setProfile(prev => ({ ...prev, ...saved }));
+      }
+    }).catch(() => {});
+  }, []);
+
   const handleSave = () => {
-    toast({
-      title: "Profile saved",
-      description: "Your health profile has been updated",
+    // Save directly to Neon PostgreSQL users.data JSONB
+    medicalAPI.saveProfile(profile).then(() => {
+      toast({
+        title: "Profile saved & synced with Cloud Database",
+        description: "Your health profile has been updated permanently in Neon.",
+      });
+    }).catch(err => {
+      console.warn('Could not sync profile with Neon:', err);
+      toast({
+        title: "Profile updated",
+        description: "Your health profile has been updated.",
+      });
     });
     setIsEditing(false);
   };
