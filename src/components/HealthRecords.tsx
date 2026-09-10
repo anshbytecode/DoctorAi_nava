@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -11,6 +11,7 @@ import { FileText, Plus, Calendar, Stethoscope, Pill, Image as ImageIcon } from 
 import { format } from 'date-fns';
 import { ImageUpload } from './ImageUpload';
 import { useWeb3 } from '@/contexts/Web3Context';
+import { profileDataAPI } from '@/lib/api';
 
 interface HealthRecord {
   id: string;
@@ -74,13 +75,23 @@ export const HealthRecords = () => {
     }
   };
 
+  useEffect(() => {
+    profileDataAPI.getSectionData('healthRecords').then(saved => {
+      if (saved && Array.isArray(saved) && saved.length > 0) {
+        setRecords(saved);
+      }
+    });
+  }, []);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const newRecord: HealthRecord = {
       id: Date.now().toString(),
       ...formData
     };
-    setRecords([newRecord, ...records]);
+    const updated = [newRecord, ...records];
+    setRecords(updated);
+    profileDataAPI.saveSectionData('healthRecords', updated);
     setIsDialogOpen(false);
     setFormData({
       type: 'visit',

@@ -322,4 +322,51 @@ router.get('/me', verifyToken, async (req, res) => {
   }
 });
 
+// Get all stored profile & dashboard data (healthRecords, vitals, medications, inventory, etc.)
+router.get('/profile-data', verifyToken, async (req, res) => {
+  try {
+    if (db.isPostgresActive()) {
+      const result = await db.query('SELECT data FROM users WHERE id = $1', [req.userId]);
+      if (result.rows.length === 0) return res.status(404).json({ error: 'User not found' });
+      return res.json(result.rows[0].data || {});
+    }
+    const users = await getUsers();
+    const user = users.find(u => u.id === req.userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    return res.json(user.data || {});
+  } catch (err) {
+    console.error('Get profile data error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Save/Update any module data (healthRecords, vitals, medications, inventory, etc.) into PostgreSQL JSONB
+router.post('/profile-data', verifyToken, async (req, res) => {
+  try {
+    const { section, data } = req.body;
+    if (!section) return res.status(400).json({ error: 'Missing section name' });
+
+    if (db.isPostgresActive()) {
+      const fetchRes = await db.query('SELECT data FROM users WHERE id = $1', [req.userId]);
+      if (fetchRes.rows.length === 0) return res.status(404).json({ error: 'User not found' });
+      const currentData = fetchRes.rows[0].data || {};
+      currentData[section] = data;
+
+      await db.query('UPDATE users SET data = $1 WHERE id = $2', [JSON.stringify(currentData), req.userId]);
+      return res.json({ success: true, section, data: currentData[section] });
+    }
+
+    const users = await getUsers();
+    const idx = users.findIndex(u => u.id === req.userId);
+    if (idx === -1) return res.status(404).json({ error: 'User not found' });
+    if (!users[idx].data) users[idx].data = {};
+    users[idx].data[section] = data;
+    await saveUsers(users);
+    return res.json({ success: true, section, data: users[idx].data[section] });
+  } catch (err) {
+    console.error('Update profile data error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;

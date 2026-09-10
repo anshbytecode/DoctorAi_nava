@@ -421,3 +421,50 @@ export const appointmentAPI = {
   }
 };
 
+export const profileDataAPI = {
+  getSectionData: async (section: string): Promise<any> => {
+    const token = tokenManager.getToken();
+    if (!token) {
+      const local = localStorage.getItem(`doctorai_${section}`);
+      return local ? JSON.parse(local) : null;
+    }
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/profile-data`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+        signal: AbortSignal.timeout(6000),
+      });
+      if (res.ok) {
+        const all = await res.json();
+        if (all && all[section]) {
+          localStorage.setItem(`doctorai_${section}`, JSON.stringify(all[section]));
+          return all[section];
+        }
+      }
+    } catch (e) {
+      console.warn(`Failed fetching ${section} from cloud:`, e);
+    }
+    const local = localStorage.getItem(`doctorai_${section}`);
+    return local ? JSON.parse(local) : null;
+  },
+
+  saveSectionData: async (section: string, data: any): Promise<void> => {
+    localStorage.setItem(`doctorai_${section}`, JSON.stringify(data));
+    const token = tokenManager.getToken();
+    if (token) {
+      try {
+        await fetch(`${API_BASE_URL}/auth/profile-data`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({ section, data }),
+          signal: AbortSignal.timeout(6000),
+        });
+      } catch (e) {
+        console.warn(`Failed saving ${section} to cloud:`, e);
+      }
+    }
+  }
+};
+
