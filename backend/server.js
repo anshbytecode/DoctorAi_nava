@@ -25,6 +25,24 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/appointments', appointmentRoutes);
 
+// Root route
+app.get('/', (req, res) => {
+  const dbStatus = db.getDbStatus();
+  res.json({
+    name: 'DoctorAI API Server',
+    status: 'online',
+    version: '1.0.0',
+    database: dbStatus.type,
+    mode: dbStatus.mode,
+    endpoints: {
+      health: '/api/health',
+      auth: '/api/auth',
+      appointments: '/api/appointments'
+    },
+    frontend: 'https://doctorainavaviaanshul.netlify.app/'
+  });
+});
+
 // Health check with live database status
 app.get('/api/health', (req, res) => {
   const dbStatus = db.getDbStatus();

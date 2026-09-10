@@ -20,7 +20,7 @@ new video drive
 https://drive.google.com/file/d/1Ax9a7He1vyyZUy5sX0ib5kb9ACRI6Fi4/view?usp=drive_link
 
 deployed link
-https://doctoraiviaaanshul.netlify.app/
+https://doctorainavaviaanshul.netlify.app/
 
 github link
 https://github.com/anshbytecode/DoctorAiadvance
