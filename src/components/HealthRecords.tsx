@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -11,7 +11,6 @@ import { FileText, Plus, Calendar, Stethoscope, Pill, Image as ImageIcon } from 
 import { format } from 'date-fns';
 import { ImageUpload } from './ImageUpload';
 import { useWeb3 } from '@/contexts/Web3Context';
-import { profileDataAPI } from '@/lib/api';
 
 interface HealthRecord {
   id: string;
@@ -30,56 +29,19 @@ export const HealthRecords = () => {
     {
       id: '1',
       type: 'visit',
-      title: 'Comprehensive Annual Checkup',
-      date: '2025-01-10',
+      title: 'Annual Checkup',
+      date: '2024-01-10',
       doctor: 'Dr. Anand Shinde',
-      description: 'Full body routine physical examination and preventive screening',
-      notes: 'All vitals within optimal range. BMI 23.4. Recommended continuing 30 min daily cardio.'
+      description: 'Routine annual health checkup',
+      notes: 'All vitals normal. Recommended to continue current exercise routine.'
     },
     {
       id: '2',
       type: 'lab',
-      title: 'Complete Metabolic & Lipid Panel',
-      date: '2025-01-08',
-      doctor: 'Dr. Anand Shinde',
-      description: 'CBC, Fasting Blood Sugar, HbA1c, Serum Creatinine & Lipid profile',
-      notes: 'Total Cholesterol 178 mg/dL (Normal). Fasting Sugar 92 mg/dL. HbA1c 5.4%.'
-    },
-    {
-      id: '3',
-      type: 'visit',
-      title: 'Cardiology Consultation & 12-Lead ECG',
-      date: '2024-12-14',
-      doctor: 'Dr. Priya Deshmukh',
-      description: 'Resting Electrocardiogram (ECG) and cardiovascular stress screening',
-      notes: 'Normal sinus rhythm. No ST-segment elevation. Blood pressure 118/76 mmHg.'
-    },
-    {
-      id: '4',
-      type: 'vaccination',
-      title: 'COVID-19 Booster & Seasonal Influenza Vaccine',
-      date: '2024-11-20',
-      doctor: 'Kalyani Nagar Health Centre',
-      description: 'Quadrivalent seasonal influenza and bivalent mRNA booster dose',
-      notes: 'Administered in left deltoid. No adverse side effects recorded during 15-min observation.'
-    },
-    {
-      id: '5',
-      type: 'lab',
-      title: 'High-Resolution Brain MRI Scan',
-      date: '2024-09-15',
-      doctor: 'Dr. Narendra Godi',
-      description: 'Non-contrast 3T magnetic resonance imaging for migraine evaluation',
-      notes: 'Brain parenchyma unremarkable. No acute infarction, hemorrhage, or mass effect.'
-    },
-    {
-      id: '6',
-      type: 'prescription',
-      title: 'Allergy & Dermatology Prescription Refill',
-      date: '2024-08-02',
-      doctor: 'Dr. Aisha Khan',
-      description: 'Topical hydrocortisone cream and Fexofenadine 180mg tablet course',
-      notes: 'Course completed for contact dermatitis. Skin lesion resolved completely.'
+      title: 'Blood Test Results',
+      date: '2024-01-08',
+      description: 'Complete blood count and lipid panel',
+      notes: 'All values within normal range'
     }
   ]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -112,23 +74,13 @@ export const HealthRecords = () => {
     }
   };
 
-  useEffect(() => {
-    profileDataAPI.getSectionData('healthRecords').then(saved => {
-      if (saved && Array.isArray(saved) && saved.length > 0) {
-        setRecords(saved);
-      }
-    });
-  }, []);
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const newRecord: HealthRecord = {
       id: Date.now().toString(),
       ...formData
     };
-    const updated = [newRecord, ...records];
-    setRecords(updated);
-    profileDataAPI.saveSectionData('healthRecords', updated);
+    setRecords([newRecord, ...records]);
     setIsDialogOpen(false);
     setFormData({
       type: 'visit',

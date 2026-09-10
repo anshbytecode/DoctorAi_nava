@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,7 +10,6 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { Activity, Heart, TrendingUp, Plus, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { profileDataAPI } from '@/lib/api';
 
 interface VitalsEntry {
   id: string;
@@ -26,58 +25,20 @@ export const VitalsTracker = () => {
   const [entries, setEntries] = useState<VitalsEntry[]>([
     {
       id: '1',
-      date: '2025-01-15',
+      date: '2024-01-15',
       bloodPressure: { systolic: 120, diastolic: 80 },
       heartRate: 72,
-      weight: 68.5,
+      weight: 70,
       temperature: 98.6,
-      notes: 'Morning measurement before breakfast. Optimal range.'
     },
     {
       id: '2',
-      date: '2025-01-10',
+      date: '2024-01-10',
       bloodPressure: { systolic: 118, diastolic: 78 },
       heartRate: 70,
-      weight: 68.8,
+      weight: 70.5,
       temperature: 98.4,
-      notes: 'Resting vitals after light evening walk.'
     },
-    {
-      id: '3',
-      date: '2025-01-05',
-      bloodPressure: { systolic: 122, diastolic: 82 },
-      heartRate: 75,
-      weight: 69.1,
-      temperature: 98.6,
-      notes: 'Post workout reading.'
-    },
-    {
-      id: '4',
-      date: '2024-12-28',
-      bloodPressure: { systolic: 119, diastolic: 79 },
-      heartRate: 71,
-      weight: 69.4,
-      temperature: 98.5,
-      notes: 'Routine weekend checkup.'
-    },
-    {
-      id: '5',
-      date: '2024-12-20',
-      bloodPressure: { systolic: 121, diastolic: 81 },
-      heartRate: 74,
-      weight: 69.8,
-      temperature: 98.7,
-      notes: 'Work day afternoon measurement.'
-    },
-    {
-      id: '6',
-      date: '2024-12-10',
-      bloodPressure: { systolic: 124, diastolic: 83 },
-      heartRate: 76,
-      weight: 70.2,
-      temperature: 98.6,
-      notes: 'Initial monthly baseline recording.'
-    }
   ]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -90,14 +51,6 @@ export const VitalsTracker = () => {
     notes: '',
   });
   const { toast } = useToast();
-
-  useEffect(() => {
-    profileDataAPI.getSectionData('vitals').then(saved => {
-      if (saved && Array.isArray(saved) && saved.length > 0) {
-        setEntries(saved);
-      }
-    });
-  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,9 +66,7 @@ export const VitalsTracker = () => {
       temperature: formData.temperature ? Number(formData.temperature) : undefined,
       notes: formData.notes || undefined,
     };
-    const updated = [newEntry, ...entries];
-    setEntries(updated);
-    profileDataAPI.saveSectionData('vitals', updated);
+    setEntries([newEntry, ...entries]);
     setIsDialogOpen(false);
     setFormData({
       date: new Date().toISOString().split('T')[0],
@@ -127,8 +78,8 @@ export const VitalsTracker = () => {
       notes: '',
     });
     toast({
-      title: 'Vitals recorded & synced to cloud',
-      description: 'Your vitals have been saved to your PostgreSQL database.',
+      title: 'Vitals recorded',
+      description: 'Your vitals have been saved successfully.',
     });
   };
 

@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { appointmentAPI, Appointment } from '@/lib/api';
 import { 
   Calendar, 
   Heart, 
@@ -41,109 +40,35 @@ const Dashboard = () => {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
-  const [appointmentsList, setAppointmentsList] = useState<Appointment[]>([]);
 
-  useEffect(() => {
-    const loadAppointments = async () => {
-      try {
-        const data = await appointmentAPI.getAppointments();
-        if (data && data.length > 0) {
-          setAppointmentsList(data);
-          return;
-        }
-      } catch (e) {
-        console.warn('Failed to load appointments:', e);
-      }
-      // Initial entries if no appointments booked yet
-      setAppointmentsList([
-        {
-          id: 'demo-1',
-          doctorId: '1',
-          doctorName: 'Dr. Anand Shinde',
-          specialty: 'Family Medicine',
-          date: '2025-01-15',
-          time: '10:00 AM',
-          status: 'confirmed',
-          reason: 'Routine quarterly checkup & general vitals review'
-        },
-        {
-          id: 'demo-2',
-          doctorId: '2',
-          doctorName: 'Dr. Priya Deshmukh',
-          specialty: 'Cardiology',
-          date: '2025-01-18',
-          time: '11:30 AM',
-          status: 'confirmed',
-          reason: 'Cardiovascular screening & ECG consultation'
-        },
-        {
-          id: 'demo-3',
-          doctorId: '4',
-          doctorName: 'Dr. Aisha Khan',
-          specialty: 'Dermatology',
-          date: '2025-01-22',
-          time: '03:00 PM',
-          status: 'pending',
-          reason: 'Skin allergy and eczema follow-up'
-        },
-        {
-          id: 'demo-4',
-          doctorId: '5',
-          doctorName: 'Dr. Vikramaditya Rao',
-          specialty: 'Orthopedic Surgery',
-          date: '2025-01-25',
-          time: '04:15 PM',
-          status: 'confirmed',
-          reason: 'Knee joint mobility & posture assessment'
-        },
-        {
-          id: 'demo-5',
-          doctorId: '7',
-          doctorName: 'Dr. Sneha Kulkarni',
-          specialty: 'Psychiatry',
-          date: '2025-01-28',
-          time: '02:00 PM',
-          status: 'pending',
-          reason: 'Sleep cycle & stress management consultation'
-        }
-      ]);
-    };
-
-    loadAppointments();
-    window.addEventListener('doctorai_appointment_updated', loadAppointments);
-    return () => window.removeEventListener('doctorai_appointment_updated', loadAppointments);
-  }, [isAuthenticated]);
-
-  const handleCancelAppointment = async (id: string, name: string) => {
-    try {
-      await appointmentAPI.cancelAppointment(id);
-      setAppointmentsList(prev => prev.filter(apt => apt.id !== id));
-      toast({
-        title: "Appointment Cancelled",
-        description: `Your appointment with ${name} was cancelled and updated in your database.`,
-      });
-    } catch (e) {
-      toast({
-        title: "Cancellation Failed",
-        description: "Could not cancel appointment at this time.",
-        variant: "destructive"
-      });
+  const upcomingAppointments = [
+    {
+      id: 1,
+      doctor: 'Dr. Anand Shinde',
+      specialty: 'Family Medicine',
+      date: '2024-01-15',
+      time: '10:00 AM',
+      status: 'confirmed'
+    },
+    {
+      id: 2,
+      doctor: 'Dr. Dhruv Bhilare',
+      specialty: 'Veterinary',
+      date: '2024-01-20',
+      time: '2:30 PM',
+      status: 'pending'
     }
-  };
+  ];
 
   const healthMetrics = [
-    { label: 'Blood Pressure', value: '120/80 mmHg', status: 'normal', icon: Activity },
+    { label: 'Blood Pressure', value: '120/80', status: 'normal', icon: Activity },
     { label: 'Heart Rate', value: '72 bpm', status: 'normal', icon: Heart },
-    { label: 'Blood Glucose', value: '95 mg/dL', status: 'normal', icon: TrendingUp },
-    { label: 'Weight', value: '68.5 kg', status: 'normal', icon: TrendingUp }
+    { label: 'Weight', value: '70 kg', status: 'normal', icon: TrendingUp }
   ];
 
   const medications = [
-    { name: 'Metformin 500mg', dosage: '500mg', frequency: 'Twice daily with meals', nextDose: '8:00 AM' },
-    { name: 'Aspirin Cardio', dosage: '75mg', frequency: 'Once daily after breakfast', nextDose: '9:00 AM' },
-    { name: 'Vitamin D3 (Cholecalciferol)', dosage: '60,000 IU', frequency: 'Once weekly', nextDose: 'Sunday' },
-    { name: 'Atorvastatin', dosage: '10mg', frequency: 'Once daily before bedtime', nextDose: '10:00 PM' },
-    { name: 'Omega-3 Fish Oil', dosage: '1000mg', frequency: 'Once daily', nextDose: '1:00 PM' }
+    { name: 'Aspirin', dosage: '100mg', frequency: 'Once daily', nextDose: '8:00 AM' },
+    { name: 'Vitamin D', dosage: '1000 IU', frequency: 'Once daily', nextDose: '9:00 AM' }
   ];
 
   return (
@@ -372,11 +297,11 @@ const Dashboard = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {appointmentsList.length > 0 ? (
-                    appointmentsList.map((appointment) => (
+                  {upcomingAppointments.length > 0 ? (
+                    upcomingAppointments.map((appointment) => (
                       <div key={appointment.id} className="flex items-start justify-between p-4 border rounded-lg">
                         <div>
-                          <h4 className="font-semibold">{appointment.doctorName || (appointment as any).doctor}</h4>
+                          <h4 className="font-semibold">{appointment.doctor}</h4>
                           <p className="text-sm text-gray-600">{appointment.specialty}</p>
                           <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
                             <span className="flex items-center">
@@ -539,45 +464,45 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {appointmentsList.map((appointment) => {
-                    const docName = appointment.doctorName || (appointment as any).doctor || 'Doctor';
-                    return (
-                      <div key={appointment.id} className="p-4 border rounded-lg">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h4 className="font-semibold">{docName}</h4>
-                            <p className="text-sm text-gray-600">{appointment.specialty}</p>
-                            <p className="text-sm text-gray-500 mt-1">
-                              {appointment.date} at {appointment.time}
-                            </p>
-                            {appointment.reason && (
-                              <p className="text-xs text-slate-500 mt-1 italic">
-                                Reason: {appointment.reason}
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Badge 
-                              className={appointment.status === 'confirmed' 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-yellow-100 text-yellow-800'
-                              }
-                            >
-                              {appointment.status || 'pending'}
-                            </Badge>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                              onClick={() => handleCancelAppointment(appointment.id, docName)}
-                            >
-                              Cancel
-                            </Button>
-                          </div>
+                  {upcomingAppointments.map((appointment) => (
+                    <div key={appointment.id} className="p-4 border rounded-lg">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h4 className="font-semibold">{appointment.doctor}</h4>
+                          <p className="text-sm text-gray-600">{appointment.specialty}</p>
+                          <p className="text-sm text-gray-500 mt-1">
+                            {appointment.date} at {appointment.time}
+                          </p>
+                        </div>
+                        <div className="flex space-x-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              toast({
+                                title: "Reschedule appointment",
+                                description: `Reschedule feature for ${appointment.doctor} coming soon`,
+                              });
+                            }}
+                          >
+                            Reschedule
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              toast({
+                                title: "Appointment cancelled",
+                                description: `Appointment with ${appointment.doctor} has been cancelled`,
+                              });
+                            }}
+                          >
+                            Cancel
+                          </Button>
                         </div>
                       </div>
-                    );
-                  })}
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
