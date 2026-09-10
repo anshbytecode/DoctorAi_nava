@@ -11,6 +11,7 @@ import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { appointmentAPI } from '@/lib/api';
 
 interface AppointmentBookingProps {
   doctor: {
@@ -51,12 +52,18 @@ export const AppointmentBooking = ({ doctor, trigger }: AppointmentBookingProps)
     setIsSubmitting(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await appointmentAPI.createAppointment({
+        doctorId: doctor.id.toString(),
+        doctorName: doctor.name,
+        specialty: doctor.specialty,
+        date: format(date, 'yyyy-MM-dd'),
+        time,
+        reason,
+      });
       
       toast({
-        title: "Appointment booked!",
-        description: `Your appointment with ${doctor.name} has been scheduled for ${format(date, 'PPP')} at ${time}`,
+        title: "Appointment booked & saved to cloud!",
+        description: `Your appointment with ${doctor.name} on ${format(date, 'PPP')} at ${time} was securely stored in your PostgreSQL database.`,
       });
       
       setOpen(false);
