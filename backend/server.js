@@ -1,5 +1,10 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
+
+const db = require('./db');
 const authRoutes = require('./routes/auth');
 const appointmentRoutes = require('./routes/appointments');
 
@@ -20,12 +25,27 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/appointments', appointmentRoutes);
 
-// Health check
+// Health check with live database status
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Server is running' });
+  const dbStatus = db.getDbStatus();
+  res.json({
+    status: 'ok',
+    message: 'Server is running',
+    database: dbStatus.type,
+    mode: dbStatus.mode,
+    timestamp: new Date().toISOString()
+  });
 });
+
+// Initialize database on startup (auto-creates tables in Supabase PostgreSQL if configured)
+(async () => {
+  if (db.isPostgresActive()) {
+    await db.initDB();
+  }
+})();
 
 app.listen(PORT, () => {
+  const dbStatus = db.getDbStatus();
   console.log(`Server is running on port ${PORT}`);
+  console.log(`Storage engine: ${dbStatus.type} (${dbStatus.mode})`);
 });
-

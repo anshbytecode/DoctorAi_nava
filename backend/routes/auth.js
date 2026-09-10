@@ -3,12 +3,13 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const fs = require('fs').promises;
 const path = require('path');
+const db = require('../db');
 const router = express.Router();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 const DATA_FILE = path.join(__dirname, '../data/users.json');
 
-// Ensure data directory exists
+// Ensure data directory exists for JSON fallback
 async function ensureDataFile() {
   try {
     await fs.access(DATA_FILE);
@@ -18,14 +19,14 @@ async function ensureDataFile() {
   }
 }
 
-// Read users from file
+// Read users from file (JSON fallback)
 async function getUsers() {
   await ensureDataFile();
   const data = await fs.readFile(DATA_FILE, 'utf8');
   return JSON.parse(data);
 }
 
-// Write users to file
+// Write users to file (JSON fallback)
 async function saveUsers(users) {
   await ensureDataFile();
   await fs.writeFile(DATA_FILE, JSON.stringify(users, null, 2));
@@ -64,45 +65,96 @@ router.post('/signup', async (req, res) => {
       });
     }
 
-    const users = await getUsers();
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const id = Date.now().toString();
+    const createdAt = new Date().toISOString();
 
-    // Check if user already exists
+    // 1. PostgreSQL (Supabase) mode
+    if (db.isPostgresActive()) {
+      const existingUser = await db.query('SELECT id FROM users WHERE email = $1', [email]);
+      if (existingUser.rows.length > 0) {
+        return res.status(400).json({ 
+          error: 'User with this email already exists' 
+        });
+      }
+
+      const insertQuery = `
+        INSERT INTO users (id, name, email, password, role, specialty, license_number, created_at, data)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING id, name, email, role, specialty, created_at
+      `;
+      const values = [
+        id,
+        name,
+        email,
+        hashedPassword,
+        userRole,
+        userRole === 'doctor' ? specialty : null,
+        userRole === 'doctor' ? licenseNumber : null,
+        createdAt,
+        JSON.stringify({
+          healthRecords: [],
+          appointments: [],
+          patientDocuments: [],
+          inventory: []
+        })
+      ];
+
+      const result = await db.query(insertQuery, values);
+      const user = result.rows[0];
+
+      const token = jwt.sign(
+        { userId: user.id, email: user.email, role: user.role },
+        JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+
+      return res.status(201).json({
+        message: 'User created successfully',
+        token,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          specialty: user.specialty
+        }
+      });
+    }
+
+    // 2. Local JSON file fallback
+    const users = await getUsers();
     if (users.find(u => u.email === email)) {
       return res.status(400).json({ 
         error: 'User with this email already exists' 
       });
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create user
     const newUser = {
-      id: Date.now().toString(),
+      id,
       name,
       email,
       password: hashedPassword,
       role: userRole,
       specialty: userRole === 'doctor' ? specialty : undefined,
       licenseNumber: userRole === 'doctor' ? licenseNumber : undefined,
-      createdAt: new Date().toISOString(),
+      createdAt,
       healthRecords: [],
       appointments: [],
-      patientDocuments: userRole === 'doctor' ? [] : [],
-      inventory: userRole === 'doctor' ? [] : []
+      patientDocuments: [],
+      inventory: []
     };
 
     users.push(newUser);
     await saveUsers(users);
 
-    // Generate token
     const token = jwt.sign(
       { userId: newUser.id, email: newUser.email, role: newUser.role },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
 
-    res.status(201).json({
+    return res.status(201).json({
       message: 'User created successfully',
       token,
       user: {
@@ -124,13 +176,49 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Validation
     if (!email || !password) {
       return res.status(400).json({ 
         error: 'Please provide email and password' 
       });
     }
 
+    // 1. PostgreSQL (Supabase) mode
+    if (db.isPostgresActive()) {
+      const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+      if (result.rows.length === 0) {
+        return res.status(401).json({ 
+          error: 'Invalid email or password' 
+        });
+      }
+
+      const user = result.rows[0];
+      const isValidPassword = await bcrypt.compare(password, user.password);
+      if (!isValidPassword) {
+        return res.status(401).json({ 
+          error: 'Invalid email or password' 
+        });
+      }
+
+      const token = jwt.sign(
+        { userId: user.id, email: user.email, role: user.role || 'patient' },
+        JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+
+      return res.json({
+        message: 'Login successful',
+        token,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role || 'patient',
+          specialty: user.specialty
+        }
+      });
+    }
+
+    // 2. Local JSON file fallback
     const users = await getUsers();
     const user = users.find(u => u.email === email);
 
@@ -140,23 +228,20 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // Check password
     const isValidPassword = await bcrypt.compare(password, user.password);
-
     if (!isValidPassword) {
       return res.status(401).json({ 
         error: 'Invalid email or password' 
       });
     }
 
-    // Generate token
     const token = jwt.sign(
       { userId: user.id, email: user.email, role: user.role || 'patient' },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
 
-    res.json({
+    return res.json({
       message: 'Login successful',
       token,
       user: {
@@ -193,6 +278,29 @@ const verifyToken = (req, res, next) => {
 // Get current user
 router.get('/me', verifyToken, async (req, res) => {
   try {
+    // 1. PostgreSQL (Supabase) mode
+    if (db.isPostgresActive()) {
+      const result = await db.query(
+        'SELECT id, name, email, role, specialty, created_at FROM users WHERE id = $1',
+        [req.userId]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      const user = result.rows[0];
+      return res.json({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role || 'patient',
+        specialty: user.specialty,
+        createdAt: user.created_at
+      });
+    }
+
+    // 2. Local JSON file fallback
     const users = await getUsers();
     const user = users.find(u => u.id === req.userId);
 
@@ -200,7 +308,7 @@ router.get('/me', verifyToken, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json({
+    return res.json({
       id: user.id,
       name: user.name,
       email: user.email,
