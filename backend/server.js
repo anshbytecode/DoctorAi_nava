@@ -8,6 +8,7 @@ const db = require('./db');
 const authRoutes = require('./routes/auth');
 const appointmentRoutes = require('./routes/appointments');
 const medicalRoutes = require('./routes/medical');
+const liveViewer = require('./routes/liveViewer');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -26,6 +27,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api', medicalRoutes);
+app.use(liveViewer);
 
 // Root route
 app.get('/', (req, res) => {
